@@ -23,8 +23,9 @@ for i in range(start_case, end_case + 1):
             print(f"Test case {i:04d}: score = {score}")
         except (ValueError, IndexError):
             print(f"Failed to parse score from {output_file}")
+            exit(1)
     else:
         print(f"Failed to process {input_file}")
-
+        exit(1)
 print("Finished processing all test cases.")
 print(f"Total Score: {total_score}")

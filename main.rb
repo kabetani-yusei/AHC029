@@ -267,8 +267,8 @@ class Solver
     @m = m
     @k = k
     @t = t
-    #@judge = Judge.new(n, m, k)
-    @judge = Visualizer.new(n, m, k, t)
+    @judge = Judge.new(n, m, k)
+    #@judge = Visualizer.new(n, m, k, t)
   end
 
 
@@ -377,10 +377,8 @@ class Solver
         end
       elsif card.t == CardType::CANCEL_ALL
         for j in 0...m
-          if @projects[j].h > @projects[j].v
-            weight = 25 * 2 ** (@invest_level)
-            score += ((@projects[j].h - @projects[j].v) * weight) / @projects[j].h
-          end
+          weight = 25 * 2 ** (@invest_level)
+          score += ((@projects[j].h - @projects[j].v) * weight) / @projects[j].h
         end
       else
         raise 'select_action error'
@@ -463,15 +461,8 @@ class Solver
         end
       elsif card.t == CardType::CANCEL_ALL
         for j in 0...m
-          if @projects[j].h > @projects[j].v
-            weight = 25 * 2 ** (@invest_level)
-            score += ((@projects[j].h - @projects[j].v) * weight) / @projects[j].h
-          else
-            if (@projects[j].v / @projects[j].h) > 10
-              score = 0
-              break
-            end
-          end
+          weight = 25 * 2 ** (@invest_level)
+          score += ((@projects[j].h - @projects[j].v) * weight) / @projects[j].h
         end
       else
         raise 'select_next_card error'
