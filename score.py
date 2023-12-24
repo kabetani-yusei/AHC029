@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 # テストケースの範囲（0から99まで）
 start_case = 0
@@ -22,10 +23,15 @@ for i in range(start_case, end_case):
             total_score += score
             print(f"Test case {i:04d}: score = {score}")
         except (ValueError, IndexError):
-            print(f"Failed to parse score from {output_file}")
-            exit(1)
+            print(f"Failed to process {input_file}")
+            sys.exit(1)
     else:
         print(f"Failed to process {input_file}")
-        exit(1)
+        sys.exit(1)
+
+    # 結果をファイルに書き込む
+    with open(output_file, "w") as f:
+        f.write(result.stdout)
+
 print("Finished processing all test cases.")
 print(f"Total Score: {total_score}")
