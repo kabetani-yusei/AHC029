@@ -1,3 +1,4 @@
+#270行目
 #入出力用のクラス
 class Project
   attr_accessor :h, :v
@@ -284,39 +285,18 @@ class Solver
   def invest_level_exceed_check
     return @invest_level + cards_kind_check.count(CardType::INVEST) < Judge::MAX_INVEST_LEVEL
   end
-  #最大の労働力が必要なプロジェクトを選ぶ
-  def select_most_max
-    max_value = 0
-    max_value_project = 0
-    @projects.each_with_index do |project, i|
-      if project.h > max_value
-        max_value = project.h
-        max_value_project = i
-      end
-    end
-    return max_value_project
-  end
-  #最小の労働力が必要なプロジェクトを選ぶ
-  def select_most_min
-    min_value = @projects[0].h
-    min_value_project = 0
-    @projects.each_with_index do |project, i|
-      if project.h < min_value
-        min_value = project.h
-        min_value_project = i
-      end
-    end
-    return min_value_project
-  end
+
+
 
 
 
   def solve
-    @turn = 0
+    @turn = 1#ターンは1から1000まで
     @money = 0
     @invest_level = 0
     @cards = @judge.read_initial_cards
     @projects = @judge.read_initial_projects
+    @invest_interval = [0]
 
     @t.times do
       use_card_i, use_target = select_action
@@ -350,49 +330,156 @@ class Solver
   #手持ちのカードから何を出すかを決める
   def select_action
     cards_kind = cards_kind_check
-    if cards_kind.include?(CardType::INVEST) && @invest_level < Judge::MAX_INVEST_LEVEL
+    if cards_kind.include?(CardType::INVEST)
+      @invest_level += 1
       return [cards_kind.index(CardType::INVEST), 0]
-
-    elsif cards_kind.include?(CardType::WORK_ALL)
-      return [cards_kind.index(CardType::WORK_ALL), 0]
-
-    elsif cards_kind.include?(CardType::WORK_SINGLE)
-      return [cards_kind.index(CardType::WORK_SINGLE), select_most_min]
-
-    elsif cards_kind.include?(CardType::CANCEL_SINGLE)
-      return [cards_kind.index(CardType::CANCEL_SINGLE), select_most_max]
-
-    elsif cards_kind.include?(CardType::CANCEL_ALL)
-      return [0, 0]
     end
+
+
+    best_action = [0,0]
+    best_score = 0
+    @cards.each_with_index do |card, i|
+      score = 0
+      target = 0
+      best_work_score = -1
+      if card.t == CardType::WORK_SINGLE
+        for j in 0...m
+          if @projects[j].h <= card.w
+            if score <= @projects[j].v && (best_work_score == -1 || best_work_score > card.w)
+              score = @projects[j].v
+              best_work_score = card.w
+              target = j
+            end
+          else
+            if score < card.w * @projects[j].v / @projects[j].h
+              score = card.w * @projects[j].v / @projects[j].h
+              target = j
+            end
+          end
+        end
+      elsif card.t == CardType::WORK_ALL
+        for j in 0...m
+          if @projects[j].h <= card.w
+            score += @projects[j].v
+          else
+            score += card.w * @projects[j].v / @projects[j].h
+          end
+        end
+      elsif card.t == CardType::CANCEL_SINGLE
+        for j in 0...m
+          if @projects[j].h > @projects[j].v
+            weight = 25 * 2 ** (@invest_level)
+            if score < ((@projects[j].h - @projects[j].v) * weight) / @projects[j].h
+              score = ((@projects[j].h - @projects[j].v) * weight) / @projects[j].h
+              target = j
+            end
+          end
+        end
+      elsif card.t == CardType::CANCEL_ALL
+        for j in 0...m
+          if @projects[j].h > @projects[j].v
+            weight = 25 * 2 ** (@invest_level)
+            score += ((@projects[j].h - @projects[j].v) * weight) / @projects[j].h
+          end
+        end
+      else
+        raise 'select_action error'
+      end
+      if score > best_score
+        best_score = score
+        best_action = [i, target]
+      end
+    end
+    return best_action
   end
 
   #何のカードを買うかを決める
   def select_next_card(next_cards)
+    return 0 if @turn == 1000
     #買うことができるカードのリストを作成
     buyable_cards = []
     invest_cards = []
     next_cards.each_with_index do |card, i|
       if card.p <= @money
-        buyable_cards << [card.t, i] if card.t != CardType::INVEST
+        buyable_cards << [card, i] if card.t != CardType::INVEST
         invest_cards << [card.p, i] if card.t == CardType::INVEST
       end
     end
 
     #増資カードを買うことができるか
     if invest_cards.size > 0 && invest_level_exceed_check
-      invest_cards = invest_cards.sort_by{|x| x[0]}
-      return invest_cards[0][1]
+      if @invest_interval.size == 1
+        if @turn <= 650
+          @invest_interval << @turn
+          invest_cards = invest_cards.sort_by{|x| x[0]}
+          return invest_cards[0][1]
+        end
+      else
+        if @turn + (@invest_interval[-1] - @invest_interval[-2]) / 2 <= 1000
+          @invest_interval << @turn
+          invest_cards = invest_cards.sort_by{|x| x[0]}
+          return invest_cards[0][1]
+        end
+      end
     end
     
     #それ以外の場合
+    best_score = 0
     best_card_index = 0
     buyable_cards.each do |card, i|
-      if card == CardType::WORK_SINGLE
+      score = 0
+      target = 0
+      if card.t == CardType::WORK_SINGLE
+        for j in 0...m
+          if @projects[j].h <= card.w
+            if score < @projects[j].v
+              score = @projects[j].v
+              target = j
+            end
+          else
+            if score < card.w * @projects[j].v / @projects[j].h
+              score = card.w * @projects[j].v / @projects[j].h
+              target = j
+            end
+          end
+        end
+      elsif card.t == CardType::WORK_ALL
+        for j in 0...m
+          if @projects[j].h <= card.w
+            score += @projects[j].v
+          else
+            score += card.w * @projects[j].v / @projects[j].h
+          end
+        end
+      elsif card.t == CardType::CANCEL_SINGLE
+        for j in 0...m
+          if @projects[j].h > @projects[j].v
+            weight = 25 * 2 ** (@invest_level)
+            if score < ((@projects[j].h - @projects[j].v) * weight) / @projects[j].h
+              score = ((@projects[j].h - @projects[j].v) * weight) / @projects[j].h
+              target = j
+            end
+          end
+        end
+      elsif card.t == CardType::CANCEL_ALL
+        for j in 0...m
+          if @projects[j].h > @projects[j].v
+            weight = 25 * 2 ** (@invest_level)
+            score += ((@projects[j].h - @projects[j].v) * weight) / @projects[j].h
+          else
+            if (@projects[j].v / @projects[j].h) > 10
+              score = 0
+              break
+            end
+          end
+        end
+      else
+        raise 'select_next_card error'
+      end
+      score -= card.p * 4
+      if score > best_score
+        best_score = score
         best_card_index = i
-      elsif card ==CardType::WORK_ALL
-        best_card_index = i
-        break
       end
     end
     return best_card_index
