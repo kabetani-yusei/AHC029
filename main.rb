@@ -493,7 +493,7 @@ def main
   solver = Solver.new(n, m, k, t)
   score = solver.solve
   puts "#score:#{score}"
-  $stderr.puts "#score:#{score}"
+  $stderr.puts "#{score}"
 end
 
 main()
