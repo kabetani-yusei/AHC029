@@ -2,11 +2,11 @@ import subprocess
 
 # テストケースの範囲（0から99まで）
 start_case = 0
-end_case = 99
+end_case = 100
 
 total_score = 0
 
-for i in range(start_case, end_case + 1):
+for i in range(start_case, end_case):
     input_file = f"./in/{i:04d}.txt"
     output_file = f"./out/{i:04d}.txt"
 

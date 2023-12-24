@@ -267,8 +267,8 @@ class Solver
     @m = m
     @k = k
     @t = t
-    @judge = Judge.new(n, m, k)
-    #@judge = Visualizer.new(n, m, k, t)
+    #@judge = Judge.new(n, m, k)
+    @judge = Visualizer.new(n, m, k, t)
   end
 
 
