@@ -353,7 +353,7 @@ class Solver
       score = 0
       target = 0
       if card.t == CardType::WORK_SINGLE
-        if card.w == 2 ** @invest_level && @buy_project_list.size > 0
+        if card.w <= 2 ** @invest_level && @buy_project_list.size > 0
           score = @buy_project_list[0][0].v / @buy_project_list[0][0].h
           target = @buy_project_list[0][1]
         else
@@ -363,9 +363,6 @@ class Solver
               if score <= @projects[j].v - (card.w - @projects[j].h)
                 score = @projects[j].v - (card.w - @projects[j].h)
                 target = j
-                if card.w > @projects[j].h * 2
-                  score = 0
-                end
               end
             else
               if score < card.w * @projects[j].v / @projects[j].h
@@ -425,7 +422,7 @@ class Solver
           return invest_cards[0][1]
         end
       else
-        if @turn + (@invest_interval[-1] - @invest_interval[-2]) / 2 <= 1000
+        if @turn + (@invest_interval[-1] - @invest_interval[-2]) <= 1000
           @invest_interval << @turn
           invest_cards = invest_cards.sort_by{|x| x[0]}
           return invest_cards[0][1]
