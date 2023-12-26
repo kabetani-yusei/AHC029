@@ -345,7 +345,6 @@ class Solver
     #return @next_select_card if @turn != 1 #1ターン目は例外処理
     cards_kind = cards_kind_check
     if cards_kind.include?(CardType::INVEST)
-      @invest_level += 1
       return [cards_kind.index(CardType::INVEST), 0]
     end
     best_action = [0,0]
@@ -364,6 +363,9 @@ class Solver
               if score <= @projects[j].v - (card.w - @projects[j].h)
                 score = @projects[j].v - (card.w - @projects[j].h)
                 target = j
+                if card.w > @projects[j].h * 2
+                  score = 0
+                end
               end
             else
               if score < card.w * @projects[j].v / @projects[j].h
